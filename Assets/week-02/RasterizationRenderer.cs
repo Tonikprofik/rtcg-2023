@@ -122,15 +122,21 @@ namespace Week02
 
                 else if (rasterizationMode == RasterizationMode.lines)
                 {
-                    for (int ti = 0; ti < indices.Length; ti += 2)
+                    for (int ti = 0; ti < indices.Length; ti += 3)
                     {
                         var v1 = vertices[indices[ti]];
                         var v2 = vertices[indices[ti + 1]];
-                        var n = (normals[indices[ti]] + normals[indices[ti + 1]]) / 2f;
+                        var v3 = vertices[indices[ti + 2]];
+                        var n1 = (normals[indices[ti]] + normals[indices[ti + 1]]) / 2f;
+                        var n2 = (normals[indices[ti + 1]] + normals[indices[ti + 2]]) / 2f;
+                        var n3 = (normals[indices[ti + 2]] + normals[indices[ti]]) / 2f;
 
-                        RasterizeLine(v1, v2, n);
+                        RasterizeLine(v1, v2, n1);
+                        RasterizeLine(v2, v3, n2);
+                        RasterizeLine(v3, v1, n3);
                     }
                 }
+
 
                 else if (rasterizationMode == RasterizationMode.tringles)
                 {
@@ -168,7 +174,39 @@ namespace Week02
 
         void RasterizeLine(Vector3 v1, Vector3 v2, Vector3 normal)
         {
-            // - Line rasterization is not implemented. This is a challenge for you ;)
+            // Calculate the direction vector and length of the line
+            Vector3 dir = v2 - v1;
+            float length = dir.magnitude;
+
+            // Normalize the direction vector
+            dir /= length;
+
+            // Calculate the starting position and step size
+            Vector3 pos = v1;
+            Vector3 step = dir;
+
+            // Determine which axis has the largest difference
+            int axis = Mathf.Abs(dir.x) > Mathf.Abs(dir.y) ? 0 : 1;
+            if (Mathf.Abs(dir.z) > Mathf.Abs(dir[axis]))
+            {
+                axis = 2;
+                step /= dir.z;
+            }
+            else
+            {
+                step /= dir[axis];
+            }
+
+            // Loop through each pixel along the line
+            for (int i = 0; i <= length; i++)
+            {
+                // Rasterize the current pixel
+                RasterizePoint(pos, normal);
+
+                // Move to the next pixel along the line
+                pos += step;
+                pos[axis] = Mathf.Round(pos[axis]);
+            }
         }
 
 
